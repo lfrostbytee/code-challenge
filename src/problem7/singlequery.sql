@@ -25,18 +25,13 @@ INSERT INTO Trades VALUES (3,decode('67f3', 'hex'), 'swth', 72000000000000, 7337
 INSERT INTO Trades VALUES (4,decode('67f5', 'hex'), 'swth', 72000000000000, 738);
 
 /* Actual answer (Single query) */
-
-/* Assuming that a maximum of 2 CTEs are allowed for a single query */
-WITH SBalances(id, address, amount, block_height) AS (
-  SELECT B.id, B.address,
+SELECT encode(s.address::bytea, 'hex')
+	FROM (SELECT B.id, B.address,
   CASE
   	WHEN B.denom = 'usdc' THEN B.amount * 0.000001
     WHEN B.denom = 'swth' THEN B.amount * 0.00000005
     WHEN B.denom = 'tmz' THEN B.amount * 0.003
   END AS amount, block_height
-  FROM Balances B
-)
-SELECT encode(s.address::bytea, 'hex')
-	FROM SBalances S JOIN Trades T ON (T.address = S.address AND T.block_height > 730000)
+  FROM Balances B) S JOIN Trades T ON (T.address = S.address AND T.block_height > 730000)
     GROUP BY encode(S.address::bytea, 'hex')
     HAVING SUM(S.amount) >= 500;
